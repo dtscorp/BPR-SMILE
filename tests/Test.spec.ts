@@ -21,7 +21,6 @@ test.describe("Test1",()=>{
     // });
 
     test('Show Case Stage Micro', async({loginPage, dashboardPage, page}, testInfo)=>{
-        
         await loginPage.login(page);
         await dashboardPage.showCaseStageMicro();
         await dashboardPage.showCaseStageMBP()
