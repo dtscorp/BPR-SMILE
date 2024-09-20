@@ -14,7 +14,7 @@ const data = XLSX.utils.sheet_to_json(worksheet);
 
 // Menggunakan data dari Excel untuk melakukan pengujian
 test.describe('Login tests)', () => {
-  data.forEach((data:any, index) => {
+  data.forEach((data: any, index) => {
 
     const username = data.Username;
     const password = data.Password;

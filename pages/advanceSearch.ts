@@ -6,12 +6,13 @@ export class AdvanceSearch {
 
   constructor(page: Page) {
     this.page = page;
-    this.AdvanceSearchMenu=page.getByRole('menuitem', { name: 'Advance Search' });
+    this.AdvanceSearchMenu = page.getByRole('menuitem', { name: 'Advance Search' });
   }
 
   async delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
   async goToAdvanceSerach() {
     await this.AdvanceSearchMenu.click()
   }

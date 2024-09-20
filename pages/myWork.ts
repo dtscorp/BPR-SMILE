@@ -6,12 +6,13 @@ export class MyWork {
 
   constructor(page: Page) {
     this.page = page;
-    this.myWorkhMenu=page.getByRole('menuitem', { name: 'My Work' });
+    this.myWorkhMenu = page.getByRole('menuitem', { name: 'My Work' });
   }
 
   async delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
   async goToMyWork() {
     await this.myWorkhMenu.click();
   }
