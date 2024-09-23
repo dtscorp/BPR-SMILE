@@ -16,6 +16,8 @@ dotenv.config({ path: path.resolve(__dirname, '..', 'my.env') });
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
+  // globalSetup: "./global-setup",
+  // globalTeardown: "./global-teardown",
   testDir: './tests',
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -32,7 +34,7 @@ export default defineConfig({
     // baseURL: 'http://127.0.0.1:3000',
     video: "on",
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: 'on',
   },
 
   /* Configure projects for major browsers */

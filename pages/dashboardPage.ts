@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-
+import dotenv from 'dotenv';
+require('dotenv').config()
 
 export class Dashboard {
   readonly page: Page;
@@ -17,9 +18,8 @@ export class Dashboard {
   async delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-
   async navigate() {
-    await this.page.goto('http://10.243.211.45:7111/prweb/app/LOS/pkNajMMovK7tIFwgpZZuWHBWRKFIPrb0*/!STANDARD');
+    await this.page.goto(process.env.BASE_URL ?? "");
   }
 
   async showCaseStageMicro() {

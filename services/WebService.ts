@@ -1,5 +1,8 @@
 import * as XLSX from 'xlsx';
-import { Page } from '@playwright/test';
+import { Page, type Locator } from '@playwright/test';
+import { promises as fs } from 'fs';
+import * as path from 'path';
+import { getGlobalState, setGlobalState } from '../variable/global';
 
 export class WebServices {
   // readonly page:Page;
@@ -9,7 +12,7 @@ export class WebServices {
 
   static async getMasterTestData(sheetName: String, scenarioName: String) {
     let testData: any = {};
-    const filePath = './testdata/Master.xlsx';
+    const filePath = 'test-data/Master.xlsx';
     const workbook = XLSX.readFile(filePath);
     const sheet = workbook.Sheets[`${sheetName}`];
     testData = XLSX.utils.sheet_to_json(sheet);
@@ -78,6 +81,40 @@ export class WebServices {
     }
   }
 
+  static async swipeToElement(page: Page, locator: Locator, direction: 'up' | 'down' | 'left' | 'right', distance: number = 500, maxRetries: number = 5): Promise<void> {
+    try {
+      console.log(`Swiping ${direction} to find element using Locator`);
+
+      // Cek apakah elemen sudah ada di halaman
+      for (let i = 0; i < maxRetries; i++) {
+        // Cek apakah elemen sudah terlihat
+        if (await locator.isVisible()) {
+          console.log(`Element is visible`);
+          return;
+        }
+
+        // Swipe ke arah yang ditentukan
+        if (direction === 'down') {
+          await page.mouse.wheel(0, distance);  // Scroll ke bawah
+        } else if (direction === 'up') {
+          await page.mouse.wheel(0, -distance); // Scroll ke atas
+        } else if (direction === 'right') {
+          await page.mouse.wheel(distance, 0);  // Scroll ke kanan
+        } else if (direction === 'left') {
+          await page.mouse.wheel(-distance, 0); // Scroll ke kiri
+        }
+
+        // Tunggu setelah setiap swipe
+        await page.waitForTimeout(500);
+      }
+
+      throw new Error(`Element not found after swiping with locator`);
+    } catch (error) {
+      console.error(`Error while swiping to element with locator: ${error.message}`);
+      throw error;
+    }
+  }
+
   static async verifyNavigationTo(selector: string, timeout: number = 5000, page: Page): Promise<boolean> {
     try {
       console.log(`Verifying navigation by checking for element: ${selector}`);
@@ -96,39 +133,6 @@ export class WebServices {
     }
   }
 
-  static async swipeLeft(selector: string, distance: number = 500, page: Page): Promise<void> {
-    try {
-      console.log(`Swiping left on element: ${selector}`);
-
-      const element = await page.$(selector);
-      if (!element) {
-        throw new Error(`Element not found: ${selector}`);
-      }
-
-      // Dapatkan posisi bounding box dari elemen untuk memulai swipe
-      const box = await element.boundingBox();
-      if (!box) {
-        throw new Error('Unable to retrieve bounding box of the element');
-      }
-
-      // Hitung titik awal dan akhir swipe (left swipe: geser ke kiri)
-      const startX = box.x + box.width - 10; // Mulai dari tepi kanan elemen
-      const startY = box.y + box.height / 2; // Di tengah elemen secara vertikal
-      const endX = startX - distance;        // Geser sejauh jarak yang diberikan (default 500px)
-
-      // Simulasikan swipe ke kiri menggunakan mouse
-      await page.mouse.move(startX, startY);
-      await page.mouse.down();
-      await page.mouse.move(endX, startY, { steps: 20 }); // Gerakan halus dengan 20 langkah
-      await page.mouse.up();
-
-      console.log(`Successfully swiped left on element: ${selector}`);
-    } catch (error) {
-      console.error(`Failed to swipe left on element: ${selector}`);
-      throw error;
-    }
-  }
-
   static getDateNow() {
     const date = new Date();
     const todayString = date.toLocaleString().replace(/\//g, '-').replace(/,\s/g, '_');
@@ -137,13 +141,79 @@ export class WebServices {
 
 
   static async takeScreenshot(page, testName, actions) {
-    const today = WebServices.getDateNow();
+
+    let { pathReport } = getGlobalState();
     try {
-      await actions(); // Perform test-specific actions
+      await actions();
     } catch (error) {
-      console.error(`${testName} : `, error);
+      console.error(`${testName} failed : `, error);
     } finally {
-      await page.screenshot({ path: ` test-reports/${today}_${testName}/screenshot.jpg ` });
+      await page.screenshot({ path: `${pathReport}/${testName}.jpg` });
     }
   }
+
+  static async reportVideo() {
+    let { pathReport } = getGlobalState();
+    try {
+      const targetDir = path.join(__dirname, pathReport);
+      const sourceDir = path.join(__dirname, '../test-results'); // Default test results directory
+      const subdirectories = await fs.readdir(sourceDir, { withFileTypes: true });
+      for (const subdirectory of subdirectories) {
+        if (subdirectory.isDirectory()) {
+          const folderName = subdirectory.name;
+          const folderPath = path.join(sourceDir, folderName);
+          console.log('Folder path : ', folderPath)
+          const files = await fs.readdir(folderPath);
+          for (const file of files) {
+            if (file.endsWith('.webm')) {
+              const sourcePath = path.join(folderPath, file);
+              const targetPath = path.join(targetDir, file);
+              await fs.rename(sourcePath, targetPath);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`Error reading test-results: ${error}`);
+    }
+  }
+
+  // static async reportVideo() {
+  //   let { pathReport } = getGlobalState();
+
+  //   try {
+  //     const targetDir = path.join(__dirname, pathReport);
+  //     const sourceDir = path.join(__dirname, '../test-results'); // Default test results directory
+
+  //     // Read all subdirectories in the test-results directory
+  //     const subdirectories = await fs.readdir(sourceDir, { withFileTypes: true });
+
+  //     for (const subdirectory of subdirectories) {
+  //       // Look for directories that match '.playwright-artifacts' pattern
+  //       if (subdirectory.isDirectory() && subdirectory.name.startsWith('.playwright-artifacts')) {
+  //         const folderName = subdirectory.name;
+  //         const folderPath = path.join(sourceDir, folderName);
+  //         console.log('Folder path:', folderPath);
+
+  //         // Read all files in the matched folder
+  //         const files = await fs.readdir(folderPath);
+
+  //         for (const file of files) {
+  //           // Check if the file is a .webm video
+  //           if (file.endsWith('.webm')) {
+  //             const sourcePath = path.join(folderPath, file);
+  //             const targetPath = path.join(targetDir, file);
+
+  //             // Move the .webm file from source to target
+  //             await fs.copyFile(sourcePath, targetPath);
+  //             console.log(`Moved video from ${sourcePath} to ${targetPath}`);
+  //           }
+  //         }
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error(`Error reading test-results: ${error}`);
+  //   }
+  // }
+
 }
