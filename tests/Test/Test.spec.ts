@@ -17,6 +17,7 @@ test.describe("Test1", () => {
 
     test.afterAll(async ({ }, testInfo) => {
         WebServices.reportVideo();
+        await WebServices.generatePdf(testInfo);
     });
 
     test('P_001_Scenario_Positif', async ({ loginPage, dashboardPage, page }, testInfo) => {

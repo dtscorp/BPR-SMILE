@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import dotenv from 'dotenv';
+import { WebServices } from '../services/WebService';
 require('dotenv').config()
 
 export class Dashboard {
@@ -23,28 +24,37 @@ export class Dashboard {
   }
 
   async showCaseStageMicro() {
-    await this.caseStageSelect.selectOption('MDR-LOS-Work-Mikro');
-    await this.refreshButton.click()
+    await WebServices.takeScreenshot(this.page, "select_micro", async () => {
+      await this.caseStageSelect.selectOption('MDR-LOS-Work-Mikro');
+      await this.refreshButton.click()
+    })
   }
 
   async showCaseStageMBP() {
-    await this.caseStageSelect.selectOption('MDR-LOS-Work-ManageBusinessParameter');
-    await this.refreshButton.click()
-
+    await WebServices.takeScreenshot(this.page, "select_mbp", async () => {
+      await this.caseStageSelect.selectOption('MDR-LOS-Work-ManageBusinessParameter');
+      await this.refreshButton.click()
+    })
   }
 
   async showCaseStageSLIKCheck() {
-    await this.caseStageSelect.selectOption('MDR-LOS-Work-SLIKCheck');
-    await this.refreshButton.click()
+    await WebServices.takeScreenshot(this.page, "select_slik_Check", async () => {
+      await this.caseStageSelect.selectOption('MDR-LOS-Work-SLIKCheck');
+      await this.refreshButton.click()
+    })
   }
 
   async showCaseStageFraudCheck() {
-    await this.caseStageSelect.selectOption('MDR-LOS-Work-FraudCheck');
-    await this.refreshButton.click()
+    await WebServices.takeScreenshot(this.page, "select_fraud_check", async () => {
+      await this.caseStageSelect.selectOption('MDR-LOS-Work-FraudCheck');
+      await this.refreshButton.click()
+    })
   }
 
   async showCaseStageReassignment() {
-    await this.caseStageSelect.selectOption('MDR-LOS-Work-Reassignment');
-    await this.refreshButton.click()
+    await WebServices.takeScreenshot(this.page, "select_reassignment", async () => {
+      await this.caseStageSelect.selectOption('MDR-LOS-Work-Reassignment');
+      await this.refreshButton.click()
+    })
   }
 }

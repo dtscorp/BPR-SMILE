@@ -1,6 +1,8 @@
 import * as XLSX from 'xlsx';
 import { Page, type Locator } from '@playwright/test';
 import { promises as fs } from 'fs';
+const efs = require('fs');
+import puppeteer from 'puppeteer';
 import * as path from 'path';
 import { getGlobalState, setGlobalState } from '../variable/global';
 
@@ -150,6 +152,106 @@ export class WebServices {
     } finally {
       await page.screenshot({ path: `${pathReport}/${testName}.jpg` });
     }
+  }
+
+  static async generatePdf(testInfo) {
+    let { pathReport } = getGlobalState();
+    let generatedPath = `${pathReport}/test-report.pdf`
+    const htmlContent = await this.generateHtmlReport(testInfo, pathReport); // Generate HTML content
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+    console.log('Generating PDF report');
+
+    await page.pdf({
+      path: generatedPath,
+      format: 'A4',
+      printBackground: true,
+    });
+
+    console.log('PDF report generated');
+
+    await browser.close();
+  }
+
+  static async generateHtmlReport(testInfo, pathReport) {
+    const imagesHtml = await this.attachImagesFromFolder(pathReport);
+
+    const testRows = ((info) => {
+      return `
+        <tr>
+            <td>${info.title}</td>
+            <td>${info.status}</td>
+            <td>${info.duration}ms</td>
+        </tr>
+      `;
+    })(testInfo);
+
+    return `
+      <html>
+      <head>
+          <style>
+              table {
+                  width: 100%;
+                  border-collapse: collapse;
+              }
+              th, td {
+                  padding: 8px 12px;
+                  border: 1px solid #ddd;
+                  text-align: left;
+              }
+              th {
+                  background-color: #f4f4f4;
+              }
+              img {
+                  border: 1px solid #ddd;
+                  margin: 5px;
+                  max-width: 100%; /* Ensure the images fit */
+                  height: auto;
+              }
+          </style>
+      </head>
+      <body>
+          <h1>Test Report</h1>
+          <table>
+              <thead>
+                  <tr>
+                      <th>Test Name</th>
+                      <th>Status</th>
+                      <th>Duration</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  ${testRows}
+              </tbody>
+          </table>
+          <h2>Attached Images</h2>
+          ${imagesHtml} <!-- Display all images here -->
+      </body>
+      </html>
+    `;
+  }
+
+  static async attachImagesFromFolder(folderPath) {
+    let imagesHtml = '';
+
+    const files = efs.readdirSync(folderPath);
+
+    const imageFiles = files.filter(file => {
+      const ext = path.extname(file).toLowerCase();
+      return ['.png', '.jpg', '.jpeg', '.gif'].includes(ext);
+    });
+
+    for (const file of imageFiles) {
+      const absoluteImagePath = path.resolve(folderPath, file);
+      const imageUrl = `file://${absoluteImagePath}`; // For puppeteer to access the local file
+      imagesHtml += `<img src="${imageUrl}" alt="${file}" />`;
+    }
+
+    return imagesHtml;
   }
 
   static async reportVideo() {

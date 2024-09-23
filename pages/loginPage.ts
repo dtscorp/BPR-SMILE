@@ -20,7 +20,7 @@ export class LoginPage {
   }
 
   async login(page: Page, username: String, password: String) {
-    await WebServices.takeScreenshot(page, "Login Account", async () => {
+    await WebServices.takeScreenshot(page, "login_account", async () => {
       await WebServices.openUrl(page, process.env.BASE_URL)
       await this.usernameInput.fill(`${username}`);
       await this.passwordInput.fill(`${password}`);
